@@ -15,23 +15,6 @@
     --transition-speed: 0.5s;
 }
 
-/* Clases de Estado Controladas por JS */
-:root.state-perfecto {
-    --clr-bg-top: #004d40;
-    --clr-bg-bottom: #001f3f;
-    --clr-accent: #00e676;
-    --clr-card-bg: rgba(0, 31, 63, 0.7);
-    --clr-border: rgba(0, 230, 118, 0.4);
-}
-
-:root.state-peligroso {
-    --clr-bg-top: #1a1a2e;
-    --clr-bg-bottom: #0f3460;
-    --clr-accent: #e94560;
-    --clr-card-bg: rgba(15, 52, 96, 0.7);
-    --clr-border: rgba(233, 69, 96, 0.4);
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -256,9 +239,33 @@ header p {
     border: 1px solid rgba(100, 255, 218, 0.2);
 }
 
-.cal-day.available:hover, .cal-day.available.selected {
-    background: var(--clr-accent);
-    color: var(--clr-bg-top);
+.cal-status-perfecto {
+    background: rgba(0, 230, 118, 0.15) !important;
+    color: #00e676 !important;
+    border-color: rgba(0, 230, 118, 0.3) !important;
+}
+
+.cal-status-regular {
+    background: rgba(255, 152, 0, 0.15) !important;
+    color: #ffb74d !important;
+    border-color: rgba(255, 152, 0, 0.3) !important;
+}
+
+.cal-status-malo {
+    background: rgba(233, 69, 96, 0.15) !important;
+    color: #e94560 !important;
+    border-color: rgba(233, 69, 96, 0.3) !important;
+}
+
+.cal-day.available:hover {
+    background: var(--clr-accent) !important;
+    color: var(--clr-bg-top) !important;
+}
+
+.cal-day.available.selected {
+    background: var(--clr-accent) !important;
+    color: var(--clr-bg-top) !important;
+    border-color: var(--clr-accent) !important;
 }
 
 .cal-day.disabled {
