@@ -254,7 +254,21 @@ DOM.btnCheck.addEventListener('click', async () => {
 
         initMap();
         updateUI();
-        setTimeout(() => map.invalidateSize(), 100);
+        
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                map.fitBounds([
+                    [28.2, -15.85], // Noroeste
+                    [27.7, -15.35]  // Sureste
+                ], { animate: false });
+            }
+        }, 100);
+        
+        // Aseguramos que tras la animación de entrada (0.5s en CSS) se refresque el mapa
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 600);
 
     } catch (err) {
         console.error(err);
