@@ -282,3 +282,13 @@ DOM.hourSlider.addEventListener('input', (e) => {
     currentHourIndex = parseInt(e.target.value);
     updateUI();
 });
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker Registrado!', reg.scope))
+            .catch(err => console.log('Fallo al registrar el Service Worker', err));
+    });
+}
+
