@@ -76,7 +76,11 @@ header {
     margin-bottom: 1rem;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     border: 3px solid var(--clr-border);
-    transition: border-color var(--transition-speed);
+    transition: all var(--transition-speed);
+}
+
+.app-logo.hidden {
+    display: none !important;
 }
 
 header h1 {
@@ -130,32 +134,145 @@ header p {
 #date-controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
+    width: 100%;
 }
 
-.secondary-btn {
+.icon-btn {
     background: var(--clr-card-bg);
     color: var(--clr-text);
     border: 1px solid var(--clr-border);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     cursor: pointer;
+    font-weight: bold;
     backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
-    font-family: var(--font-main);
 }
 
-.secondary-btn:hover {
+.icon-btn:hover {
     background: var(--clr-accent);
     color: var(--clr-bg-top);
 }
 
-#current-date-display {
+.calendar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-btn {
+    background: transparent;
+    border: none;
+    color: var(--clr-accent);
     font-size: 1.2rem;
     font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-main);
+    padding: 0.5rem 1rem;
     min-width: 150px;
-    text-align: center;
+    transition: text-shadow 0.2s;
 }
+
+.date-btn:hover {
+    text-shadow: 0 0 10px rgba(100,255,218,0.5);
+}
+
+.calendar-dropdown {
+    position: absolute;
+    top: 100%;
+    margin-top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.calendar-header button {
+    background: transparent;
+    border: none;
+    color: var(--clr-text);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 0.5rem;
+}
+
+.calendar-header button:hover {
+    color: var(--clr-accent);
+}
+
+.calendar-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+.cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 0.5rem;
+}
+
+.cal-day-name {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--clr-text-muted);
+}
+
+.cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.cal-day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cal-day.available {
+    background: rgba(100, 255, 218, 0.1);
+    color: var(--clr-text);
+    border: 1px solid rgba(100, 255, 218, 0.2);
+}
+
+.cal-day.available:hover, .cal-day.available.selected {
+    background: var(--clr-accent);
+    color: var(--clr-bg-top);
+}
+
+.cal-day.disabled {
+    color: rgba(136, 146, 176, 0.3);
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.cal-day.empty {
+    background: transparent;
+    cursor: default;
+}
+
+
 
 #hour-slider-container {
     width: 100%;
@@ -332,8 +449,12 @@ header p {
         padding: 0.8rem 1.5rem;
     }
     #date-controls {
-        flex-direction: column;
+        flex-direction: row;
         gap: 0.5rem;
+    }
+    .date-btn {
+        min-width: 120px;
+        font-size: 1rem;
     }
     .loc-stats {
         grid-template-columns: 1fr;

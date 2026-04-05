@@ -24,8 +24,17 @@ const DOM = {
     hourSlider: document.getElementById('hour-slider'),
     prevDayBtn: document.getElementById('prev-day-btn'),
     nextDayBtn: document.getElementById('next-day-btn'),
-    locList: document.getElementById('locations-list')
+    locList: document.getElementById('locations-list'),
+    mainLogo: document.getElementById('main-logo'),
+    calDropdown: document.getElementById('calendar-dropdown'),
+    calPrevMonth: document.getElementById('cal-prev-month'),
+    calNextMonth: document.getElementById('cal-next-month'),
+    calMonthYear: document.getElementById('cal-month-year'),
+    calDays: document.getElementById('cal-days')
 };
+
+let currentCalMonth = new Date().getMonth();
+let currentCalYear = new Date().getFullYear();
 
 // Utils: Direcciones en grados
 const isBetween = (val, min, max) => {
@@ -180,17 +189,6 @@ function updateUI() {
     const hourData = dayData.hours.find(h => h.hour === currentHourIndex);
     if (!hourData) return;
 
-    // Actualizar fondo global basado en la peor/mejor condición (promedio o predominante)
-    const statusCounts = { perfecto: 0, regular: 0, malo: 0 };
-    hourData.spots.forEach(s => statusCounts[s.status]++);
-
-    document.documentElement.className = '';
-    if (statusCounts.perfecto >= 2) {
-        document.documentElement.classList.add('state-perfecto');
-    } else if (statusCounts.malo > 2) {
-        document.documentElement.classList.add('state-peligroso');
-    }
-
     // Actualizar DOM Tarjetas
     DOM.locList.innerHTML = '';
     
@@ -214,12 +212,19 @@ function updateUI() {
                 <b>${spot.name}</b><br>
                 Estado: ${spot.status.toUpperCase()}
             </div>
-        `).addTo(map);
+        `, { autoPanPadding: [10, 10] }).addTo(map);
+        
+        marker.on('click', () => {
+            // Hacemos zoom. Leaflet por defecto usará 'autoPan' para asegurar que el popup que se abre se vea entero.
+            map.setView([spot.lat, spot.lon], 13, { animate: true });
+        });
+        
         markers.push(marker);
 
         // HTML Tarjeta
         const card = document.createElement('div');
         card.className = `location-card glass`;
+        card.style.cursor = 'pointer'; // Indicador visual de que es interactivo
         card.innerHTML = `
             <div class="loc-header">
                 <span class="loc-name">${spot.name}</span>
@@ -237,13 +242,108 @@ function updateUI() {
                 </div>
             </div>
         `;
+        
+        // Al clicar una tarjeta de la lista, hacemos zoom en el mapa y la abrimos
+        card.addEventListener('click', () => {
+            map.setView([spot.lat, spot.lon], 13, { animate: true });
+            marker.openPopup();
+            // Desplazar la vista al mapa en dispositivos móviles
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
         DOM.locList.appendChild(card);
+    });
+
+    renderCalendar();
+}
+
+function renderCalendar() {
+    if (!DOM.calDays) return;
+    DOM.calDays.innerHTML = '';
+    const date = new Date(currentCalYear, currentCalMonth, 1);
+    const monthName = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    DOM.calMonthYear.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+    let firstDayIndex = date.getDay() - 1;
+    if (firstDayIndex === -1) firstDayIndex = 6;
+
+    const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstDayIndex; i++) {
+        const d = document.createElement('div');
+        d.className = 'cal-day empty';
+        DOM.calDays.appendChild(d);
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const d = document.createElement('div');
+        const yyyy = currentCalYear;
+        const mm = String(currentCalMonth + 1).padStart(2, '0');
+        const dd = String(i).padStart(2, '0');
+        const ds = `${yyyy}-${mm}-${dd}`;
+        
+        d.textContent = i;
+
+        const dataIndex = globalData ? globalData.findIndex(g => g.date === ds) : -1;
+
+        if (dataIndex !== -1) {
+            const dayInfo = globalData[dataIndex];
+            const hourForStatus = dayInfo.hours.find(h => h.hour === 12) || dayInfo.hours[0];
+            const sCounts = { perfecto: 0, regular: 0, malo: 0 };
+            if (hourForStatus && hourForStatus.spots) {
+                hourForStatus.spots.forEach(s => sCounts[s.status]++);
+            }
+            
+            let statusClass = 'cal-status-regular';
+            if (sCounts.perfecto >= 2) statusClass = 'cal-status-perfecto';
+            else if (sCounts.malo > 2) statusClass = 'cal-status-malo';
+
+            d.className = `cal-day available ${statusClass}`;
+            if (currentDateIndex === dataIndex) {
+                d.classList.add('selected');
+            }
+            d.addEventListener('click', () => {
+                currentDateIndex = dataIndex;
+                DOM.calDropdown.classList.add('hidden');
+                updateUI();
+            });
+        } else {
+            d.className = 'cal-day disabled';
+        }
+
+        DOM.calDays.appendChild(d);
+    }
+}
+
+if (DOM.dateDisplay) {
+    DOM.dateDisplay.addEventListener('click', () => {
+        DOM.calDropdown.classList.toggle('hidden');
+        renderCalendar();
+    });
+
+    DOM.calPrevMonth.addEventListener('click', () => {
+        currentCalMonth--;
+        if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+        renderCalendar();
+    });
+
+    DOM.calNextMonth.addEventListener('click', () => {
+        currentCalMonth++;
+        if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+        renderCalendar();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!DOM.dateDisplay.contains(e.target) && !DOM.calDropdown.contains(e.target)) {
+            DOM.calDropdown.classList.add('hidden');
+        }
     });
 }
 
 DOM.btnCheck.addEventListener('click', async () => {
     DOM.btnCheck.classList.add('hidden');
     DOM.loading.classList.remove('hidden');
+    if (DOM.mainLogo) DOM.mainLogo.classList.add('hidden');
 
     try {
         globalData = await fetchMeteoData();

@@ -23,7 +23,7 @@
     
     <main class="container">
         <header>
-            <img src="images/logo.png" alt="Time2Freedive Logo" class="app-logo">
+            <img id="main-logo" src="images/logo.png" alt="Time2Freedive Logo" class="app-logo">
             <h1>Time2Freedive</h1>
             <p>Descubre dónde hacer apnea hoy en Gran Canaria</p>
         </header>
@@ -31,9 +31,24 @@
         <section class="controls">
             <button id="check-btn" class="primary-btn">¿Puedo hacer apnea?</button>
             <div id="date-controls" class="hidden">
-                <button id="prev-day-btn" class="secondary-btn">&lt; Día Anterior</button>
-                <span id="current-date-display">Cargando...</span>
-                <button id="next-day-btn" class="secondary-btn">Día Siguiente &gt;</button>
+                <button id="prev-day-btn" class="icon-btn" title="Día Anterior">&lt;</button>
+                <div class="calendar-wrapper">
+                    <button id="current-date-display" class="date-btn">Cargando...</button>
+                    <div id="calendar-dropdown" class="calendar-dropdown hidden glass">
+                        <div class="calendar-header">
+                            <button id="cal-prev-month">&lt;</button>
+                            <span id="cal-month-year">Mes</span>
+                            <button id="cal-next-month">&gt;</button>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="cal-days-header">
+                                <span class="cal-day-name">Lu</span><span class="cal-day-name">Ma</span><span class="cal-day-name">Mi</span><span class="cal-day-name">Ju</span><span class="cal-day-name">Vi</span><span class="cal-day-name">Sa</span><span class="cal-day-name">Do</span>
+                            </div>
+                            <div id="cal-days" class="cal-days"></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="next-day-btn" class="icon-btn" title="Día Siguiente">&gt;</button>
             </div>
             
             <div id="hour-slider-container" class="hidden">
