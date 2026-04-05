@@ -60,32 +60,81 @@ function evaluateConditions(spotId, waveH, waveDir, windS, windDir) {
     let score = 2; // 0: Malo, 1: Regular, 2: Perfecto
     let reasons = [];
 
-    if (spotId === 'sardina') {
-        if (isBetween(waveDir, 270, 45) && waveH > 0.8) { score = 0; reasons.push('Swell del Norte/NW peligroso'); }
-        if (isBetween(windDir, 315, 45) && windS > 15) { score = Math.min(score, 1); reasons.push('Viento N fuerte'); }
-        if (isBetween(windDir, 90, 225) && waveH < 1.0) { /* Perfecto */ }
-    } else if (spotId === 'agaete') {
-        if (isBetween(waveDir, 270, 45) && waveH > 0.8) { score = 0; reasons.push('Swell N/NW golpea directo'); }
-        if (isBetween(windDir, 270, 45) && windS > 15) { score = 0; reasons.push('Viento N/NW racheado'); }
-        if (isBetween(windDir, 90, 225) && waveH < 1.0) { /* Perfecto */ }
-    } else if (spotId === 'tufia') {
-        if (isBetween(windDir, 225, 360) && waveH < 1.0) { /* Perfecto */ }
-        if (isBetween(waveDir, 45, 135) && waveH > 0.6) { score = 0; reasons.push('Swell del Este entra directo'); }
-        if (isBetween(windDir, 45, 135) && windS > 20) { score = 0; reasons.push('Viento fuerte del Este'); }
-    } else if (spotId === 'cabron') {
-        if (isBetween(windDir, 0, 90) && windS > 20) { score = 0; reasons.push('Alisio fuerte genera corriente'); }
-        if (isBetween(waveDir, 315, 45) && waveH > 1.0) { score = 0; reasons.push('Swell N técnico'); }
-    } else if (spotId === 'risco') {
-        if (waveH > 0.8 && isBetween(waveDir, 315, 135)) { score = 0; reasons.push('Mar de fondo ensucia la zona'); }
-        if (isBetween(windDir, 0, 90) && windS > 15) { score = Math.min(score, 1); reasons.push('Alisio crea borreguillo'); }
-    } else if (spotId === 'canteras') {
-        if (isBetween(windDir, 315, 45) && windS > 20) { score = 0; reasons.push('Viento N pica el mar'); }
-        if (isBetween(waveDir, 315, 45) && waveH > 1.2) { score = Math.min(score, 1); reasons.push('Swell fuerte, quédate dentro'); }
-    }
+    // Global rule
+    if (waveH > 2.0) { score = 0; reasons.push('Oleaje extremo (>2m)'); return { score, reasons }; }
+    if (windS > 40) { score = 0; reasons.push('Temporal de viento (>40km/h)'); return { score, reasons }; }
 
-    // Reglas Generales
-    if (waveH > 2.0) score = 0;
-    if (windS > 35) score = 0;
+    if (spotId === 'sardina') {
+        const swellNW = isBetween(waveDir, 270, 45);
+        const windNW = isBetween(windDir, 270, 45);
+        
+        if (swellNW && waveH > 1.2) { score = 0; reasons.push('Swell N/NW fuerte (>1.2m)'); }
+        if (windNW && windS > 25) { score = Math.min(score, 0); reasons.push('Viento N/NW fuerte (>25km/h)'); }
+        
+        // Only evaluate yellow if we are not already red based on specific constraints
+        if (score > 0) {
+            if (swellNW && waveH >= 0.8) { score = Math.min(score, 1); reasons.push('Swell N/NW moderado, posible turbidez'); }
+            if (windNW && windS >= 15) { score = Math.min(score, 1); reasons.push('Viento N/NW que pica algo el mar'); }
+            if (windS >= 35) { score = Math.min(score, 1); reasons.push('Viento fuerte generalizado'); } // Any wind > 35 is yellow (unless caught by global >40 red limit)
+        }
+    } else if (spotId === 'agaete') {
+        const swellNW = isBetween(waveDir, 270, 45);
+        const windNW = isBetween(windDir, 270, 45);
+        
+        if (swellNW && waveH > 1.0) { score = 0; reasons.push('Swell N/NW directo (>1.0m)'); }
+        if (windNW && windS > 22) { score = Math.min(score, 0); reasons.push('Viento N/NW fuerte (>22km/h)'); }
+        
+        if (score > 0) {
+            if (swellNW && waveH >= 0.6) { score = Math.min(score, 1); reasons.push('Swell N/NW residual'); }
+            if (windNW && windS >= 12) { score = Math.min(score, 1); reasons.push('Brisa N/NW afectando visibilidad'); }
+        }
+    } else if (spotId === 'tufia') {
+        const swellSE = isBetween(waveDir, 135, 225);
+        const windSE = isBetween(windDir, 135, 225);
+        const windNE = isBetween(windDir, 45, 135);
+        
+        if (swellSE && waveH > 0.8) { score = 0; reasons.push('Swell Sur/SE entra duro (>0.8m)'); }
+        if (windSE && windS > 25) { score = Math.min(score, 0); reasons.push('Temporal viento Sur/SE'); }
+        
+        if (score > 0) {
+            if (swellSE && waveH >= 0.5) { score = Math.min(score, 1); reasons.push('Oleaje Sur/SE moderado'); }
+            if (windSE && windS >= 15) { score = Math.min(score, 1); reasons.push('Viento Sur/SE levanta mar'); }
+            if (windNE && windS >= 35) { score = Math.min(score, 1); reasons.push('Alisio muy fuerte fuera'); }
+        }
+    } else if (spotId === 'cabron') {
+        const swellNE = isBetween(waveDir, 45, 135);
+        const windNE = isBetween(windDir, 45, 135);
+        
+        if (swellNE && waveH > 1.0) { score = 0; reasons.push('Swell Este/NE peligro a costa (>1.0m)'); }
+        if (windNE && windS > 25) { score = Math.min(score, 0); reasons.push('Alisio fuerte directo (>25km/h)'); }
+        
+        if (score > 0) {
+            if (swellNE && waveH >= 0.6) { score = Math.min(score, 1); reasons.push('Peligro/visibilidad por Swell E/NE'); }
+            if (windNE && windS >= 15) { score = Math.min(score, 1); reasons.push('Alisio moderado racheado'); }
+        }
+    } else if (spotId === 'risco') {
+        const swellNE = isBetween(waveDir, 45, 135);
+        const windNE = isBetween(windDir, 45, 135);
+        
+        if (swellNE && waveH > 1.2) { score = 0; reasons.push('Swell Este/NE muy fuerte (>1.2m)'); }
+        if (windNE && windS > 30) { score = Math.min(score, 0); reasons.push('Vendaval de Alisio (>30km/h)'); }
+        
+        if (score > 0) {
+            if (swellNE && waveH >= 0.8) { score = Math.min(score, 1); reasons.push('Resaca E/NE remueve fondo'); }
+            if (windNE && windS >= 18) { score = Math.min(score, 1); reasons.push('Alisio moderado forma oleaje'); }
+        }
+    } else if (spotId === 'canteras') {
+        const swellNW = isBetween(waveDir, 270, 45);
+        const windN = isBetween(windDir, 270, 90); // North components
+        
+        if (swellNW && waveH > 1.5) { score = 0; reasons.push('Swell Norte salta la barra (>1.5m)'); }
+        if (windN && windS > 25) { score = Math.min(score, 0); reasons.push('Temporal viento Norte (>25km/h)'); }
+        
+        if (score > 0) {
+            if (swellNW && waveH >= 1.0) { score = Math.min(score, 1); reasons.push('Mar de fondo Norte moderada'); }
+            if (windN && windS >= 15) { score = Math.min(score, 1); reasons.push('Viento Norte refrescado afecta agua'); }
+        }
+    }
 
     return { score, reasons };
 }
