@@ -215,8 +215,9 @@ function updateUI() {
         `, { autoPanPadding: [10, 10] }).addTo(map);
         
         marker.on('click', () => {
-            // Hacemos zoom. Leaflet por defecto usará 'autoPan' para asegurar que el popup que se abre se vea entero.
-            map.setView([spot.lat, spot.lon], 13, { animate: true });
+            // Hacemos zoom desplazando el centro un poco hacia el Norte, para que el marcador quede más abajo y el popup quepa perfecto.
+            const latOffset = window.innerWidth < 600 ? 0.015 : 0.005;
+            map.setView([spot.lat + latOffset, spot.lon], 13, { animate: true });
         });
         
         markers.push(marker);
@@ -245,7 +246,8 @@ function updateUI() {
         
         // Al clicar una tarjeta de la lista, hacemos zoom en el mapa y la abrimos
         card.addEventListener('click', () => {
-            map.setView([spot.lat, spot.lon], 13, { animate: true });
+            const latOffset = window.innerWidth < 600 ? 0.015 : 0.005;
+            map.setView([spot.lat + latOffset, spot.lon], 13, { animate: true });
             marker.openPopup();
             // Desplazar la vista al mapa en dispositivos móviles
             window.scrollTo({ top: 0, behavior: 'smooth' });
