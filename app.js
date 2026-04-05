@@ -1,9 +1,9 @@
 const LOCATIONS = [
-    { id: 'sardina', name: 'Sardina del Norte', lat: 28.1509, lon: -15.6951, image: 'images/sardina_del_norte_1775319000201.png' },
-    { id: 'agaete', name: 'Agaete', lat: 28.1000, lon: -15.7170, image: 'images/agaete.png' },
-    { id: 'tufia', name: 'Tufia', lat: 27.9622, lon: -15.3813, image: 'images/tufia_bay_1775319016817.png' },
-    { id: 'cabron', name: 'El Cabrón', lat: 27.8680, lon: -15.3870, image: 'images/el_cabron_1775319030003.png' },
-    { id: 'risco', name: 'Risco Verde', lat: 27.8590, lon: -15.3910, image: 'images/risco_verde_1775319062071.png' },
+    { id: 'sardina', name: 'Sardina del Norte', lat: 28.153780, lon: -15.700058, image: 'images/sardina_del_norte_1775319000201.png' },
+    { id: 'agaete', name: 'Agaete', lat: 28.095031, lon: -15.708352, image: 'images/agaete.png' },
+    { id: 'tufia', name: 'Tufia', lat: 27.961840, lon: -15.379835, image: 'images/tufia_bay_1775319016817.png' },
+    { id: 'cabron', name: 'El Cabrón', lat: 27.870599, lon: -15.385277, image: 'images/el_cabron_1775319030003.png' },
+    { id: 'risco', name: 'Risco Verde', lat: 27.856890, lon: -15.387041, image: 'images/risco_verde_1775319062071.png' },
     { id: 'canteras', name: 'Las Canteras', lat: 28.1380, lon: -15.4380, image: 'images/las_canteras_1775319078513.png' }
 ];
 
