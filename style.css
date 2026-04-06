@@ -68,6 +68,7 @@ header {
     align-items: center;
     justify-content: center;
     position: relative;
+    width: 100%;
 }
 
 .title-logo-wrapper {
@@ -75,13 +76,16 @@ header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
 }
 
 .title-lang-group {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.5rem;
 }
 
 .app-logo {
@@ -101,7 +105,7 @@ header {
 header h1 {
     font-size: 2.8rem;
     font-weight: 800;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     color: var(--clr-accent);
     text-shadow: 0 4px 10px rgba(0,0,0,0.3);
     transition: color var(--transition-speed);
@@ -109,9 +113,12 @@ header h1 {
 
 /* Language Selector */
 .lang-selector {
-    position: relative;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     display: inline-block;
-    margin-bottom: 0.5rem; /* align with h1 margin-bottom */
+    z-index: 1001;
 }
 
 .lang-btn, .lang-option {
@@ -131,8 +138,7 @@ header h1 {
 .lang-dropdown {
     position: absolute;
     top: 100%;
-    right: 50%;
-    transform: translateX(50%);
+    right: 0;
     margin-top: 5px;
     padding: 0.5rem;
     z-index: 1000;

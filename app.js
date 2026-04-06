@@ -40,6 +40,8 @@ let map = null;
 let markers = [];
 let layerControl = null;
 let layersRef = {};
+let rainviewerTimes = [];
+let rainviewerDataFetched = false;
 
 const dictReasons = {
     'Oleaje extremo (>2m)': { en: 'Extreme waves (>2m)', de: 'Extremer Wellengang (>2m)' },
@@ -491,9 +493,13 @@ function initMap() {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
             .then(res => res.json())
             .then(data => {
-                if(data && data.radar && data.radar.past && data.radar.past.length > 0) {
-                    const time = data.radar.past[data.radar.past.length - 1].time;
-                    layersRef.rainLayer.setUrl(`https://tilecache.rainviewer.com/v2/radar/${time}/256/{z}/{x}/{y}/2/1_1.png`);
+                if(data && data.radar) {
+                    rainviewerTimes = [];
+                    if (data.radar.past) rainviewerTimes.push(...data.radar.past);
+                    if (data.radar.nowcast) rainviewerTimes.push(...data.radar.nowcast);
+                    
+                    rainviewerDataFetched = true;
+                    updateLayerTimes();
                 }
             })
             .catch(console.error);
@@ -541,6 +547,64 @@ function updateLayerControl() {
     layerControl = L.control.layers(baseMaps, overlayMaps, {
         position: 'topright'
     }).addTo(map);
+}
+
+function updateLayerTimes() {
+    if (!globalData || globalData.length === 0 || !map) return;
+
+    const dayData = globalData[currentDateIndex];
+    if (!dayData) return;
+    
+    // Seleccionar hora
+    const selectedDate = new Date(dayData.date);
+    selectedDate.setHours(currentHourIndex, 0, 0, 0);
+    const selectedTimeSecs = Math.floor(selectedDate.getTime() / 1000);
+    
+    // RainViewer
+    if (layersRef.rainLayer && rainviewerDataFetched && rainviewerTimes.length > 0) {
+        let closestRV = rainviewerTimes[0];
+        let minDiff = Math.abs(selectedTimeSecs - closestRV.time);
+        
+        for (let obj of rainviewerTimes) {
+            const diff = Math.abs(selectedTimeSecs - obj.time);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestRV = obj;
+            }
+        }
+        
+        // Mostramos lluvia si la consulta es cercana al rango que nos ha dado RainViewer (±3 horas)
+        if (minDiff <= 3 * 3600) {
+            layersRef.rainLayer.setUrl(`https://tilecache.rainviewer.com/v2/radar/${closestRV.time}/256/{z}/{x}/{y}/2/1_1.png`);
+            layersRef.rainLayer.setOpacity(0.6);
+        } else {
+            layersRef.rainLayer.setOpacity(0);
+        }
+    }
+
+    // OpenPortGuide
+    if (layersRef.wavesLayer || layersRef.windLayer) {
+        let diffHours = (selectedDate.getTime() - Date.now()) / 3600000;
+        
+        const allowedTimesteps = [0, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
+        let closestStep = 0;
+        let minStepDiff = Infinity;
+        
+        for (let step of allowedTimesteps) {
+            const diff = Math.abs(diffHours - step);
+            if (diff < minStepDiff) {
+                minStepDiff = diff;
+                closestStep = step;
+            }
+        }
+        
+        if (layersRef.wavesLayer) {
+            layersRef.wavesLayer.setUrl(`https://weather.openportguide.de/tiles/actual/significant_wave_height/${closestStep}h/{z}/{x}/{y}.png`);
+        }
+        if (layersRef.windLayer) {
+            layersRef.windLayer.setUrl(`https://weather.openportguide.de/tiles/actual/wind_stream/${closestStep}h/{z}/{x}/{y}.png`);
+        }
+    }
 }
 
 function updateUI() {
@@ -643,6 +707,7 @@ function updateUI() {
     });
 
     renderCalendar();
+    updateLayerTimes();
 }
 
 function renderCalendar() {
