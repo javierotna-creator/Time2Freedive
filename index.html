@@ -26,9 +26,32 @@
     
     <main class="container">
         <header>
-            <img id="main-logo" src="images/logo.png" alt="Time2Freedive Logo" class="app-logo">
-            <h1>Time2Freedive</h1>
-            <p>Descubre dónde hacer apnea hoy en Gran Canaria</p>
+            <div class="header-content">
+                <button id="menu-btn" class="hamburger-btn" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                
+                <div class="title-logo-wrapper">
+                    <img id="main-logo" src="images/logo.png" alt="Time2Freedive Logo" class="app-logo">
+                    <div class="title-lang-group">
+                        <h1>Time2Freedive</h1>
+                        <div class="lang-selector" id="lang-selector">
+                            <button id="current-lang-btn" class="lang-btn">🇪🇸</button>
+                            <div id="lang-dropdown" class="lang-dropdown hidden glass">
+                                <button class="lang-option" data-lang="en">🇬🇧</button>
+                                <button class="lang-option" data-lang="de">🇩🇪</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p id="app-subtitle">Descubre dónde hacer apnea hoy en Canarias</p>
+
+            <div id="menu-dropdown" class="menu-dropdown hidden glass">
+                <ul>
+                    <li id="menu-add-loc">Añadir ubicación</li>
+                </ul>
+            </div>
         </header>
 
         <section class="controls">
@@ -54,7 +77,7 @@
             </div>
             
             <div id="hour-slider-container" class="hidden">
-                <label for="hour-slider">Hora: <span id="hour-display">12:00</span></label>
+                <label for="hour-slider"><span id="lbl-hour">Hora</span>: <span id="hour-display">12:00</span></label>
                 <input type="range" id="hour-slider" min="0" max="23" value="12" step="1">
             </div>
             
@@ -67,7 +90,7 @@
         <!-- Loading State -->
         <div id="loading" class="hidden">
             <div class="spinner"></div>
-            <p>Consultando a Poseidón (Open-Meteo)...</p>
+            <p id="txt-loading">Consultando a Poseidón (Open-Meteo)...</p>
         </div>
 
         <div id="results-container" class="layout hidden">
@@ -80,6 +103,30 @@
         </div>
     </main>
 
+    <!-- Formulario oculto para Netlify Forms -->
+    <form name="new-location-request" data-netlify="true" hidden>
+        <input type="text" name="location-name">
+    </form>
+
+    <!-- Modal para añadir ubicación -->
+    <div id="add-location-modal" class="modal-overlay hidden">
+        <div class="modal-content glass">
+            <h2 id="modal-title">Añadir Ubicación</h2>
+            <p id="modal-desc">Elige un lugar de la lista o escribe uno nuevo para solicitarlo.</p>
+            
+            <div class="input-group">
+                <input type="text" id="add-loc-input" list="loc-list" placeholder="Escribe el nombre del lugar..." autocomplete="off">
+                <datalist id="loc-list">
+                    <!-- Options injected via JS -->
+                </datalist>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-cancel-loc" class="view-btn">Cancelar</button>
+                <button id="btn-confirm-loc" class="view-btn active">Añadir</button>
+            </div>
+        </div>
+    </div>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="app.js"></script>
