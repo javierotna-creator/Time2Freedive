@@ -6,6 +6,9 @@
     <meta name="theme-color" content="#0a192f">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="images/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Time2Freedive">
     <title>Time2Freedive - Gran Canaria</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +32,6 @@
         </header>
 
         <section class="controls">
-            <button id="check-btn" class="primary-btn">¿Puedo hacer apnea?</button>
             <div id="date-controls" class="hidden">
                 <button id="prev-day-btn" class="icon-btn" title="Día Anterior">&lt;</button>
                 <div class="calendar-wrapper">
@@ -55,6 +57,11 @@
                 <label for="hour-slider">Hora: <span id="hour-display">12:00</span></label>
                 <input type="range" id="hour-slider" min="0" max="23" value="12" step="1">
             </div>
+            
+            <div id="view-toggle" class="view-toggle hidden">
+                <button id="btn-map-view" class="view-btn active">Mapa</button>
+                <button id="btn-list-view" class="view-btn">Lista</button>
+            </div>
         </section>
 
         <!-- Loading State -->
@@ -67,7 +74,7 @@
             <div class="map-wrapper glass">
                 <div id="map"></div>
             </div>
-            <div class="cards-wrapper">
+            <div class="cards-wrapper hidden">
                 <div id="locations-list"></div>
             </div>
         </div>

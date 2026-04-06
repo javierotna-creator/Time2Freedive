@@ -14,11 +14,15 @@ let map = null;
 let markers = [];
 
 const DOM = {
-    btnCheck: document.getElementById('check-btn'),
     loading: document.getElementById('loading'),
     results: document.getElementById('results-container'),
     dateControls: document.getElementById('date-controls'),
     hourSliderContainer: document.getElementById('hour-slider-container'),
+    viewToggle: document.getElementById('view-toggle'),
+    btnMapView: document.getElementById('btn-map-view'),
+    btnListView: document.getElementById('btn-list-view'),
+    mapWrapper: document.querySelector('.map-wrapper'),
+    cardsWrapper: document.querySelector('.cards-wrapper'),
     dateDisplay: document.getElementById('current-date-display'),
     hourDisplay: document.getElementById('hour-display'),
     hourSlider: document.getElementById('hour-slider'),
@@ -214,11 +218,96 @@ async function fetchMeteoData() {
 
 function initMap() {
     if (!map) {
-        map = L.map('map').setView([27.95, -15.55], 10);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        // Mapas Base (Basemaps)
+        const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap contributors & CARTO',
             subdomains: 'abcd',
             maxZoom: 20
+        });
+
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
+            maxZoom: 19
+        });
+
+        const relief = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenStreetMap contributors | Map style: &copy; OpenTopoMap',
+            maxZoom: 17
+        });
+
+        // Capas Superpuestas (Overlays)
+        // EMODnet Bathymetry para relieve submarino
+        const bathymetry = L.tileLayer.wms('https://ows.emodnet-bathymetry.eu/wms', {
+            layers: 'emodnet:mean',
+            format: 'image/png',
+            transparent: true,
+            attribution: 'EMODnet Bathymetry',
+            opacity: 0.7
+        });
+
+        // OpenSeaMap para marcas marinas
+        const seamarks = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenSeaMap contributors',
+            maxZoom: 18
+        });
+
+        // Capa de lluvia de RainViewer (Se actualiza dinámicamente)
+        const rainLayer = L.tileLayer('https://tilecache.rainviewer.com/v2/radar/1690000000/256/{z}/{x}/{y}/2/1_1.png', {
+            attribution: 'Radar data: &copy; RainViewer',
+            opacity: 0.6,
+            maxZoom: 18
+        });
+
+        // Consultar el último timestamp disponible para el radar de lluvia
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.radar && data.radar.past && data.radar.past.length > 0) {
+                    const time = data.radar.past[data.radar.past.length - 1].time;
+                    rainLayer.setUrl(`https://tilecache.rainviewer.com/v2/radar/${time}/256/{z}/{x}/{y}/2/1_1.png`);
+                }
+            })
+            .catch(console.error);
+
+        // Capa de nubes de OpenWeatherMap
+        const cloudsLayer = L.tileLayer('https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=119e5d021c3260904033321473bc4fbb', {
+            attribution: 'Weather data &copy; OpenWeatherMap',
+            opacity: 0.7,
+            maxZoom: 18
+        });
+
+        // Capa de viento de OpenWeatherMap
+        const windLayer = L.tileLayer('https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=119e5d021c3260904033321473bc4fbb', {
+            attribution: 'Weather data &copy; OpenWeatherMap',
+            opacity: 0.7,
+            maxZoom: 18
+        });
+
+        // Inicializar el mapa
+        map = L.map('map', {
+            center: [27.95, -15.55],
+            zoom: 10,
+            layers: [cartoVoyager] // Capa por defecto (Vista actual)
+        });
+
+        // Definir el control de capas
+        const baseMaps = {
+            "Mapa Principal (Por defecto)": cartoVoyager,
+            "Satélite": satellite,
+            "Relieve y Terreno": relief
+        };
+
+        const overlayMaps = {
+            "Relieve Submarino (Batimetría)": bathymetry,
+            "Marcas y Navegación (Mar)": seamarks,
+            "Lluvia (Radar)": rainLayer,
+            "Nubes": cloudsLayer,
+            "Viento": windLayer
+        };
+
+        // Añadir el control de capas al mapa
+        L.control.layers(baseMaps, overlayMaps, {
+            position: 'topright'
         }).addTo(map);
     }
 }
@@ -256,12 +345,25 @@ function updateUI() {
             opacity: 1,
             fillOpacity: 0.8
         }).bindPopup(`
-            <div style="text-align: center;">
-                <img src="${spot.image}" style="width: 100%; max-width: 150px; border-radius: 8px; margin-bottom: 0.5rem; display: block;" alt="${spot.name}">
-                <b>${spot.name}</b><br>
-                Estado: ${spot.status.toUpperCase()}
+            <div class="map-popup-container">
+                <img src="${spot.image}" class="map-popup-img" alt="${spot.name}">
+                <b class="map-popup-title">${spot.name}</b>
+                <div class="map-popup-status">
+                    Estado: <span class="loc-status status-${spot.status} popup-status-badge">${spot.status}</span>
+                </div>
+                ${spot.reasons.length > 0 ? `<p class="map-popup-reasons">${spot.reasons.join(', ')}</p>` : ''}
+                <div class="map-popup-stats">
+                    <div class="popup-stat-box">
+                        <span class="popup-stat-label">Oleaje</span>
+                        <span class="popup-stat-value">${spot.wave_height}m (${getDirectionName(spot.wave_direction)})</span>
+                    </div>
+                    <div class="popup-stat-box">
+                        <span class="popup-stat-label">Viento</span>
+                        <span class="popup-stat-value">${spot.wind_speed} km/h (${getDirectionName(spot.wind_direction)})</span>
+                    </div>
+                </div>
             </div>
-        `, { autoPanPadding: [10, 10] }).addTo(map);
+        `, { autoPanPadding: [10, 10], minWidth: 220 }).addTo(map);
         
         marker.on('click', () => {
             // Hacemos zoom desplazando el centro un poco hacia el Norte, para que el marcador quede más abajo y el popup quepa perfecto.
@@ -295,6 +397,15 @@ function updateUI() {
         
         // Al clicar una tarjeta de la lista, hacemos zoom en el mapa y la abrimos
         card.addEventListener('click', () => {
+            // Cambiar a vista de mapa
+            DOM.btnMapView.classList.add('active');
+            DOM.btnListView.classList.remove('active');
+            DOM.mapWrapper.classList.remove('hidden');
+            DOM.cardsWrapper.classList.add('hidden');
+            if (map) {
+                map.invalidateSize();
+            }
+
             const latOffset = window.innerWidth < 600 ? 0.015 : 0.005;
             map.setView([spot.lat + latOffset, spot.lon], 13, { animate: true });
             marker.openPopup();
@@ -391,8 +502,7 @@ if (DOM.dateDisplay) {
     });
 }
 
-DOM.btnCheck.addEventListener('click', async () => {
-    DOM.btnCheck.classList.add('hidden');
+async function initApp() {
     DOM.loading.classList.remove('hidden');
     if (DOM.mainLogo) DOM.mainLogo.classList.add('hidden');
 
@@ -402,6 +512,7 @@ DOM.btnCheck.addEventListener('click', async () => {
         DOM.results.classList.remove('hidden');
         DOM.dateControls.classList.remove('hidden');
         DOM.hourSliderContainer.classList.remove('hidden');
+        DOM.viewToggle.classList.remove('hidden');
 
         initMap();
         updateUI();
@@ -424,10 +535,12 @@ DOM.btnCheck.addEventListener('click', async () => {
     } catch (err) {
         console.error(err);
         alert('Error al consultar datos a Open-Meteo. Revisa tu conexión.');
-        DOM.btnCheck.classList.remove('hidden');
         DOM.loading.classList.add('hidden');
     }
-});
+}
+
+// Iniciar aplicación automáticamente
+initApp();
 
 DOM.prevDayBtn.addEventListener('click', () => {
     if (currentDateIndex > 0) {
@@ -447,6 +560,25 @@ DOM.hourSlider.addEventListener('input', (e) => {
     currentHourIndex = parseInt(e.target.value);
     updateUI();
 });
+
+if (DOM.btnMapView && DOM.btnListView) {
+    DOM.btnMapView.addEventListener('click', () => {
+        DOM.btnMapView.classList.add('active');
+        DOM.btnListView.classList.remove('active');
+        DOM.mapWrapper.classList.remove('hidden');
+        DOM.cardsWrapper.classList.add('hidden');
+        if (map) {
+            setTimeout(() => map.invalidateSize(), 50);
+        }
+    });
+
+    DOM.btnListView.addEventListener('click', () => {
+        DOM.btnListView.classList.add('active');
+        DOM.btnMapView.classList.remove('active');
+        DOM.cardsWrapper.classList.remove('hidden');
+        DOM.mapWrapper.classList.add('hidden');
+    });
+}
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
